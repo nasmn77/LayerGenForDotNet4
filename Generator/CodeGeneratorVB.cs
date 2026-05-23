@@ -141,18 +141,31 @@ namespace LayerGenForDotNet4.Generator
         }
 
         // ─── namespace helpers ─────────────────────────────────────────────────────
-        private static void WriteNsOpen(StringBuilder sb, string ns)
+        // suffix = "DataLayer" | "BusinessLayer" | "" (for Universal/Interfaces)
+        private static string NsFull(string ns, string suffix)
         {
-            if (!string.IsNullOrWhiteSpace(ns))
-                sb.AppendLine($"Namespace {ns}");
+            bool hasNs     = !string.IsNullOrWhiteSpace(ns);
+            bool hasSuffix = !string.IsNullOrWhiteSpace(suffix);
+            if (!hasNs && !hasSuffix) return "";
+            if (!hasNs)  return suffix;
+            if (!hasSuffix) return ns;
+            return $"{ns}.{suffix}";
         }
-        private static void WriteNsClose(StringBuilder sb, string ns)
+
+        private static void WriteNsOpen(StringBuilder sb, string ns, string suffix = "")
         {
-            if (!string.IsNullOrWhiteSpace(ns))
+            string full = NsFull(ns, suffix);
+            if (!string.IsNullOrWhiteSpace(full))
+                sb.AppendLine($"Namespace {full}");
+        }
+        private static void WriteNsClose(StringBuilder sb, string ns, string suffix = "")
+        {
+            string full = NsFull(ns, suffix);
+            if (!string.IsNullOrWhiteSpace(full))
                 sb.AppendLine("End Namespace");
         }
 
-        // Prefix used when calling DataLayer/BusinessLayer – empty if no namespace
+        // Prefix used when calling DataLayer/BusinessLayer types from BusinessLayer
         private static string DL(string ns) =>
             string.IsNullOrWhiteSpace(ns) ? "DataLayer." : $"{ns}.DataLayer.";
         private static string BL(string ns) =>
@@ -179,8 +192,8 @@ namespace LayerGenForDotNet4.Generator
             sb.AppendLine("Imports System");
             sb.AppendLine("Imports System.Data");
             sb.AppendLine();
-            WriteNsOpen(sb, ns);
-            if (!string.IsNullOrWhiteSpace(ns)) sb.AppendLine();
+            WriteNsOpen(sb, ns, "DataLayer");
+            if (!string.IsNullOrWhiteSpace(NsFull(ns, "DataLayer"))) sb.AppendLine();
 
             sb.AppendLine($"#Region \"{cn} Class\"");
             sb.AppendLine($"<Serializable()> Partial Public Class {cn}");
@@ -210,7 +223,7 @@ namespace LayerGenForDotNet4.Generator
 
             if (pkField != null)
             {
-                W(sb, 1, $"Public Sub New(ByVal pkPrimaryKey As {VbType(pkField)})");
+                W(sb, 1, $"Public Sub New(ByVal pkPrimaryKey As {VbType(pkField, respectNullable: false)})");
                 W(sb, 2, "m_IsUpdate = True");
                 W(sb, 2, "SetConnectString()");
                 W(sb, 2, "Me.Get(pkPrimaryKey)");
@@ -257,11 +270,19 @@ namespace LayerGenForDotNet4.Generator
             // FK properties
             foreach (var fk in table.ForeignKeys)
             {
-                string fkType = $"{bl}{fk.PkTable}";
+                string fkType  = $"{bl}{fk.PkTable}";
+                var fkField    = table.Fields.FirstOrDefault(f => f.FieldName == fk.FkColumn);
+                bool fkNullable = fkField?.IsNullable ?? false;
+                // إذا nullable: نتحقق من HasValue قبل إنشاء الكائن، ونستخدم .Value
+                string fkVal   = fkNullable ? $"Me.m_{fk.FkColumn}.Value" : $"Me.m_{fk.FkColumn}";
+                string fkGuard = fkNullable
+                    ? $"If ((Me.my{fk.FkColumn} Is Nothing) AndAlso Me.m_{fk.FkColumn}.HasValue) Then"
+                    : $"If ((Me.my{fk.FkColumn} Is Nothing)) Then";
+
                 W(sb, 1, $"Public Property F{fk.FkColumn} As {fkType}");
                 W(sb, 2, "Get");
-                W(sb, 3, $"If ((Me.my{fk.FkColumn} Is Nothing)) Then");
-                W(sb, 4, $"Me.my{fk.FkColumn} = New {fkType}(Me.m_{fk.FkColumn})");
+                W(sb, 3, fkGuard);
+                W(sb, 4, $"Me.my{fk.FkColumn} = New {fkType}({fkVal})");
                 W(sb, 3, "End If");
                 W(sb, 3, $"Return Me.my{fk.FkColumn}");
                 W(sb, 2, "End Get");
@@ -697,7 +718,7 @@ namespace LayerGenForDotNet4.Generator
 
             sb.AppendLine("End Class");
             sb.AppendLine("#End Region");
-            if (!string.IsNullOrWhiteSpace(ns)) { sb.AppendLine(); WriteNsClose(sb, ns); }
+            if (!string.IsNullOrWhiteSpace(NsFull(ns, "DataLayer"))) { sb.AppendLine(); WriteNsClose(sb, ns, "DataLayer"); }
 
             return sb.ToString();
         }
@@ -724,8 +745,8 @@ namespace LayerGenForDotNet4.Generator
             sb.AppendLine("Imports System");
             sb.AppendLine("Imports System.Data");
             sb.AppendLine();
-            WriteNsOpen(sb, ns);
-            if (!string.IsNullOrWhiteSpace(ns)) sb.AppendLine();
+            WriteNsOpen(sb, ns, "BusinessLayer");
+            if (!string.IsNullOrWhiteSpace(NsFull(ns, "BusinessLayer"))) sb.AppendLine();
 
             // ── Business single class ─────────────────────────────────────────────
             sb.AppendLine($"#Region \"{cn} Class\"");
@@ -742,7 +763,7 @@ namespace LayerGenForDotNet4.Generator
             sb.AppendLine();
             if (pkField != null && !table.IsView)
             {
-                W(sb, 1, $"Public Sub New(ByVal PrimaryKey As {VbType(pkField)})");
+                W(sb, 1, $"Public Sub New(ByVal PrimaryKey As {VbType(pkField, respectNullable: false)})");
                 W(sb, 2, "MyBase.New(PrimaryKey)");
                 W(sb, 1, "End Sub");
                 sb.AppendLine();
@@ -785,7 +806,7 @@ namespace LayerGenForDotNet4.Generator
 
             // Sort fields enum
             var sortableFields = table.Fields
-                .Where(f => f.NetType is not (SqlNetType.ByteArray or SqlNetType.Object))
+                .Where(f => f.NetType is not (SqlNetType.ByteArray or SqlNetType.Object or SqlNetType.Bool))
                 .ToList();
 
             sb.AppendLine("#Region \"Enumerated Sort Fields\"");
@@ -806,6 +827,14 @@ namespace LayerGenForDotNet4.Generator
             sb.AppendLine("#Region \"Sort Comparers\"");
             foreach (var f in sortableFields)
             {
+                string fn  = SafeName(f.FieldName);
+                // للـ String نستخدم String.Compare، للـ Nullable نستخدم GetValueOrDefault، للبقية CompareTo مباشرة
+                string cmpAsc = f.NetType == SqlNetType.String
+                    ? $"String.Compare(o1.{fn}, o2.{fn}, StringComparison.CurrentCulture)"
+                    : f.IsNullable
+                        ? $"o1.{fn}.GetValueOrDefault().CompareTo(o2.{fn}.GetValueOrDefault())"
+                        : $"o1.{fn}.CompareTo(o2.{fn})";
+
                 // Ascending
                 W(sb, 1, $"Private Class Comp_{f.FieldName}");
                 W(sb, 2, "Implements IComparer");
@@ -814,7 +843,7 @@ namespace LayerGenForDotNet4.Generator
                 W(sb, 3, $"Dim o1 As {blcn} = CType(x, {blcn})");
                 W(sb, 3, $"Dim o2 As {blcn} = CType(y, {blcn})");
                 W(sb, 3, "Try");
-                W(sb, 4, $"Return o1.{SafeName(f.FieldName)}.CompareTo(o2.{SafeName(f.FieldName)})");
+                W(sb, 4, $"Return {cmpAsc}");
                 W(sb, 3, "Catch ex As Exception");
                 W(sb, 4, "Return 0");
                 W(sb, 3, "End Try");
@@ -831,7 +860,7 @@ namespace LayerGenForDotNet4.Generator
                 W(sb, 3, $"Dim o2 As {blcn} = CType(y, {blcn})");
                 W(sb, 3, "Dim j As Integer");
                 W(sb, 3, "Try");
-                W(sb, 4, $"j = o1.{SafeName(f.FieldName)}.CompareTo(o2.{SafeName(f.FieldName)})");
+                W(sb, 4, $"j = {cmpAsc}");
                 W(sb, 4, "If j = 1 Then Return -1");
                 W(sb, 4, "If j = -1 Then Return 1");
                 W(sb, 3, "Catch ex As Exception");
@@ -964,7 +993,7 @@ namespace LayerGenForDotNet4.Generator
             sb.AppendLine("\tEnd Class");
             sb.AppendLine("#End Region");
 
-            if (!string.IsNullOrWhiteSpace(ns)) { sb.AppendLine(); WriteNsClose(sb, ns); }
+            if (!string.IsNullOrWhiteSpace(NsFull(ns, "BusinessLayer"))) { sb.AppendLine(); WriteNsClose(sb, ns, "BusinessLayer"); }
 
             return sb.ToString();
         }
@@ -1029,8 +1058,8 @@ namespace LayerGenForDotNet4.Generator
             sb.AppendLine("Imports System");
             sb.AppendLine("Imports System.Data");
             sb.AppendLine();
-            WriteNsOpen(sb, ns);
-            if (!string.IsNullOrWhiteSpace(ns)) sb.AppendLine();
+            WriteNsOpen(sb, ns, "DataLayer");
+            if (!string.IsNullOrWhiteSpace(NsFull(ns, "DataLayer"))) sb.AppendLine();
             sb.AppendLine($"#Region \"{cn} Custom Class\"");
             sb.AppendLine($"Partial Public Class {cn}");
             sb.AppendLine();
@@ -1046,7 +1075,7 @@ namespace LayerGenForDotNet4.Generator
             sb.AppendLine();
             sb.AppendLine("End Class");
             sb.AppendLine("#End Region");
-            if (!string.IsNullOrWhiteSpace(ns)) { sb.AppendLine(); WriteNsClose(sb, ns); }
+            if (!string.IsNullOrWhiteSpace(NsFull(ns, "DataLayer"))) { sb.AppendLine(); WriteNsClose(sb, ns, "DataLayer"); }
             return sb.ToString();
         }
 
@@ -1061,8 +1090,8 @@ namespace LayerGenForDotNet4.Generator
             sb.AppendLine("Imports System");
             sb.AppendLine("Imports System.Data");
             sb.AppendLine();
-            WriteNsOpen(sb, ns);
-            if (!string.IsNullOrWhiteSpace(ns)) sb.AppendLine();
+            WriteNsOpen(sb, ns, "BusinessLayer");
+            if (!string.IsNullOrWhiteSpace(NsFull(ns, "BusinessLayer"))) sb.AppendLine();
             sb.AppendLine($"#Region \"{cn} Custom Class\"");
             sb.AppendLine($"Partial Public Class {cn}");
             sb.AppendLine();
@@ -1078,7 +1107,7 @@ namespace LayerGenForDotNet4.Generator
             sb.AppendLine();
             sb.AppendLine("End Class");
             sb.AppendLine("#End Region");
-            if (!string.IsNullOrWhiteSpace(ns)) { sb.AppendLine(); WriteNsClose(sb, ns); }
+            if (!string.IsNullOrWhiteSpace(NsFull(ns, "BusinessLayer"))) { sb.AppendLine(); WriteNsClose(sb, ns, "BusinessLayer"); }
             return sb.ToString();
         }
 

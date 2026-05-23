@@ -43,6 +43,10 @@ namespace LayerGenForDotNet4.Generator
                 : new string(' ', indent * 4) + line);
         }
 
+        // Returns full namespace: "DataLayer" | "xxxx.DataLayer" | "BusinessLayer" | "xxxx.BusinessLayer"
+        private static string NsLayer(string namespaceName, string layer) =>
+            string.IsNullOrWhiteSpace(namespaceName) ? layer : $"{namespaceName}.{layer}";
+
         private static string SpParamSize(FieldInfo f)
         {
             string t = f.SqlTypeName.ToLowerInvariant();
@@ -76,7 +80,7 @@ namespace LayerGenForDotNet4.Generator
             W(sb, 0, "using System.Data;");
             W(sb, 0, "using Microsoft.Data.SqlClient;");
             W(sb, 0);
-            W(sb, 0, $"namespace {namespaceName}.DataLayer");
+            W(sb, 0, $"namespace {NsLayer(namespaceName, "DataLayer")}");
             W(sb, 0, "{");
 
             W(sb, 1, "[Serializable]");
@@ -553,11 +557,11 @@ namespace LayerGenForDotNet4.Generator
             W(sb, 0, "using System;");
             W(sb, 0, "using System.Data;");
             W(sb, 0);
-            W(sb, 0, $"namespace {namespaceName}.BusinessLayer");
+            W(sb, 0, $"namespace {NsLayer(namespaceName, "BusinessLayer")}");
             W(sb, 0, "{");
 
             W(sb, 1, "[Serializable]");
-            W(sb, 1, $"public class {cn} : {namespaceName}.DataLayer.{cn}");
+            W(sb, 1, $"public class {cn} : {NsLayer(namespaceName, "DataLayer")}.{cn}");
             W(sb, 1, "{");
 
             // ── Constructors ──────────────────────────────────────────────────────
@@ -842,7 +846,7 @@ namespace LayerGenForDotNet4.Generator
             }
             W(sb, 0, "using Microsoft.Extensions.Configuration;");
             W(sb, 0);
-            W(sb, 0, $"namespace {namespaceName}.DataLayer");
+            W(sb, 0, $"namespace {NsLayer(namespaceName, "DataLayer")}");
             W(sb, 0, "{");
             W(sb, 1, "public static class Universal");
             W(sb, 1, "{");
@@ -1001,8 +1005,10 @@ namespace LayerGenForDotNet4.Generator
             W(sb, 0, "using System.Data;");
             W(sb, 0, "using Microsoft.Data.SqlClient;");
             W(sb, 0);
-            if (!string.IsNullOrEmpty(namespaceName)) { W(sb, 0, $"namespace {namespaceName}.DataLayer"); W(sb, 0, "{"); }
-            int b = string.IsNullOrEmpty(namespaceName) ? 0 : 1;
+            string dlNs = NsLayer(namespaceName, "DataLayer");
+            W(sb, 0, $"namespace {dlNs}");
+            W(sb, 0, "{");
+            int b = 1;
             W(sb, b, $"public partial class {cn}");
             W(sb, b, "{");
             W(sb, b + 1, "#region Custom Data Queries");
@@ -1031,8 +1037,10 @@ namespace LayerGenForDotNet4.Generator
             }
             W(sb, 0, "using System.Data;");
             W(sb, 0);
-            if (!string.IsNullOrEmpty(namespaceName)) { W(sb, 0, $"namespace {namespaceName}.BusinessLayer"); W(sb, 0, "{"); }
-            int b = string.IsNullOrEmpty(namespaceName) ? 0 : 1;
+            string blNs = NsLayer(namespaceName, "BusinessLayer");
+            W(sb, 0, $"namespace {blNs}");
+            W(sb, 0, "{");
+            int b = 1;
             W(sb, b, $"public partial class {cn}");
             W(sb, b, "{");
             W(sb, b + 1, "#region Custom Business Logic");
