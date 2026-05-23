@@ -816,8 +816,8 @@ namespace LayerGenForDotNet4.Generator
             W(sb, 1, "End Enum");
             sb.AppendLine();
             W(sb, 1, "Public Enum SortType");
-            W(sb, 2, "Ascending = 1");
-            W(sb, 2, "Descending = 2");
+            W(sb, 2, "Ascending = 0");
+            W(sb, 2, "Descending = 1");
             W(sb, 1, "End Enum");
             sb.AppendLine();
             sb.AppendLine("#End Region");
@@ -861,12 +861,12 @@ namespace LayerGenForDotNet4.Generator
                 W(sb, 3, "Dim j As Integer");
                 W(sb, 3, "Try");
                 W(sb, 4, $"j = {cmpAsc}");
-                W(sb, 4, "If j = 1 Then Return -1");
-                W(sb, 4, "If j = -1 Then Return 1");
+                W(sb, 4, "If j > 0 Then Return -1");
+                W(sb, 4, "If j < 0 Then Return 1");
                 W(sb, 3, "Catch ex As Exception");
                 W(sb, 4, "j = 0");
                 W(sb, 3, "End Try");
-                W(sb, 3, "Return j");
+                W(sb, 3, "Return 0");
                 W(sb, 2, "End Function");
                 W(sb, 1, "End Class");
                 sb.AppendLine();
