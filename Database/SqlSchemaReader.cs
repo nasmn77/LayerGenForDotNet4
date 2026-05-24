@@ -40,16 +40,18 @@ namespace LayerGenForDotNet4.Database
         }
 
         /// <summary>Returns all user tables and views (excluding system tables)</summary>
-        public List<TableInfo> GetTables()
+        public List<TableInfo> GetTables(string schema = "dbo")
         {
             var list = new List<TableInfo>();
             using var conn = OpenConnection();
 
-            // Use INFORMATION_SCHEMA instead of sp_tables – cleaner in modern SQL Server
-            const string sql = @"
+            string schemaFilter = string.IsNullOrWhiteSpace(schema) ? "dbo" : schema;
+
+            string sql = $@"
                 SELECT TABLE_NAME, TABLE_TYPE
                 FROM INFORMATION_SCHEMA.TABLES
                 WHERE TABLE_CATALOG = DB_NAME()
+                  AND TABLE_SCHEMA = '{schemaFilter.Replace("'", "''")}'
                   AND TABLE_NAME NOT IN (
                     'dtproperties','syscolumns','sysdepends','syscomments',
                     'sysfilegroups','sysfiles','sysfiles1','sysforeignkeys',

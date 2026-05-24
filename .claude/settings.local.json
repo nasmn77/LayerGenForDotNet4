@@ -3,7 +3,8 @@
     "allow": [
       "Read(//c/MyProjects/LayergenMMX/Layers/New/**)",
       "Bash(del \"C:\\\\MyProjects\\\\LayergenMMX\\\\Layers\\\\New\\\\Universal.VB\")",
-      "Bash(del \"C:\\\\MyProjects\\\\LayergenMMX\\\\Layers\\\\New\\\\Interfaces.VB\")"
+      "Bash(del \"C:\\\\MyProjects\\\\LayergenMMX\\\\Layers\\\\New\\\\Interfaces.VB\")",
+      "Bash(grep -v \"^[0-9]*:[[:space:]]*//\")"
     ],
     "additionalDirectories": [
       "C:\\MyProjects\\LayergenMMX\\Layers\\New"

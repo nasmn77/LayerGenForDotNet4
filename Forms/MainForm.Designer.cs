@@ -21,6 +21,8 @@ namespace LayerGenForDotNet4.Forms
             txtServer = new TextBox();
             lblDb = new Label();
             txtDatabase = new TextBox();
+            lblSchema = new Label();
+            txtSchema = new TextBox();
             grpAuth = new GroupBox();
             rbWindows = new RadioButton();
             rbSql = new RadioButton();
@@ -53,6 +55,7 @@ namespace LayerGenForDotNet4.Forms
             lblTablesTitle = new Label();
             btnSelectAll = new Button();
             btnDeselectAll = new Button();
+            txtSearch = new TextBox();
             clbTables = new CheckedListBox();
             btnCreateLayers = new Button();
             lblStatus = new Label();
@@ -74,6 +77,8 @@ namespace LayerGenForDotNet4.Forms
             pnlLeft.Controls.Add(txtServer);
             pnlLeft.Controls.Add(lblDb);
             pnlLeft.Controls.Add(txtDatabase);
+            pnlLeft.Controls.Add(lblSchema);
+            pnlLeft.Controls.Add(txtSchema);
             pnlLeft.Controls.Add(grpAuth);
             pnlLeft.Controls.Add(lblUser);
             pnlLeft.Controls.Add(txtUser);
@@ -142,11 +147,29 @@ namespace LayerGenForDotNet4.Forms
             txtDatabase.Size = new Size(206, 24);
             txtDatabase.TabIndex = 4;
             // 
+            // lblSchema
+            //
+            lblSchema.Location = new Point(10, 104);
+            lblSchema.Name = "lblSchema";
+            lblSchema.Size = new Size(95, 22);
+            lblSchema.TabIndex = 5;
+            lblSchema.Text = "السكيما:";
+            lblSchema.TextAlign = ContentAlignment.MiddleRight;
+            //
+            // txtSchema
+            //
+            txtSchema.Location = new Point(112, 102);
+            txtSchema.Name = "txtSchema";
+            txtSchema.RightToLeft = RightToLeft.No;
+            txtSchema.Size = new Size(206, 24);
+            txtSchema.TabIndex = 6;
+            txtSchema.Text = "dbo";
+            //
             // grpAuth
-            // 
+            //
             grpAuth.Controls.Add(rbWindows);
             grpAuth.Controls.Add(rbSql);
-            grpAuth.Location = new Point(10, 104);
+            grpAuth.Location = new Point(10, 134);
             grpAuth.Name = "grpAuth";
             grpAuth.Size = new Size(318, 54);
             grpAuth.TabIndex = 5;
@@ -176,117 +199,117 @@ namespace LayerGenForDotNet4.Forms
             // lblUser
             // 
             lblUser.Enabled = false;
-            lblUser.Location = new Point(10, 170);
+            lblUser.Location = new Point(10, 200);
             lblUser.Name = "lblUser";
             lblUser.Size = new Size(95, 22);
-            lblUser.TabIndex = 6;
+            lblUser.TabIndex = 7;
             lblUser.Text = "المستخدم:";
             lblUser.TextAlign = ContentAlignment.MiddleRight;
-            // 
+            //
             // txtUser
-            // 
+            //
             txtUser.Enabled = false;
-            txtUser.Location = new Point(112, 168);
+            txtUser.Location = new Point(112, 198);
             txtUser.Name = "txtUser";
             txtUser.RightToLeft = RightToLeft.No;
             txtUser.Size = new Size(206, 24);
-            txtUser.TabIndex = 7;
-            // 
+            txtUser.TabIndex = 8;
+            //
             // lblPassword
-            // 
+            //
             lblPassword.Enabled = false;
-            lblPassword.Location = new Point(10, 200);
+            lblPassword.Location = new Point(10, 230);
             lblPassword.Name = "lblPassword";
             lblPassword.Size = new Size(95, 22);
-            lblPassword.TabIndex = 8;
+            lblPassword.TabIndex = 9;
             lblPassword.Text = "كلمة المرور:";
             lblPassword.TextAlign = ContentAlignment.MiddleRight;
-            // 
+            //
             // txtPassword
-            // 
+            //
             txtPassword.Enabled = false;
-            txtPassword.Location = new Point(112, 198);
+            txtPassword.Location = new Point(112, 228);
             txtPassword.Name = "txtPassword";
             txtPassword.RightToLeft = RightToLeft.No;
             txtPassword.Size = new Size(206, 24);
-            txtPassword.TabIndex = 9;
+            txtPassword.TabIndex = 10;
             txtPassword.UseSystemPasswordChar = true;
-            // 
+            //
             // btnConnect
-            // 
+            //
             btnConnect.BackColor = Color.FromArgb(25, 118, 210);
             btnConnect.Cursor = Cursors.Hand;
             btnConnect.FlatAppearance.BorderSize = 0;
             btnConnect.FlatStyle = FlatStyle.Flat;
             btnConnect.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
             btnConnect.ForeColor = Color.White;
-            btnConnect.Location = new Point(10, 232);
+            btnConnect.Location = new Point(10, 262);
             btnConnect.Name = "btnConnect";
             btnConnect.Size = new Size(318, 36);
-            btnConnect.TabIndex = 10;
+            btnConnect.TabIndex = 11;
             btnConnect.Text = "🔗  اتصال";
             btnConnect.UseVisualStyleBackColor = false;
             btnConnect.Click += btnConnect_Click;
-            // 
+            //
             // sep1
-            // 
+            //
             sep1.ForeColor = Color.Gray;
-            sep1.Location = new Point(10, 280);
+            sep1.Location = new Point(10, 310);
             sep1.Name = "sep1";
             sep1.Size = new Size(318, 18);
-            sep1.TabIndex = 11;
+            sep1.TabIndex = 12;
             sep1.Text = "────────── خيارات التوليد ──────────";
             sep1.TextAlign = ContentAlignment.MiddleCenter;
-            // 
+            //
             // lblNs
-            // 
-            lblNs.Location = new Point(10, 306);
+            //
+            lblNs.Location = new Point(10, 336);
             lblNs.Name = "lblNs";
             lblNs.Size = new Size(95, 22);
-            lblNs.TabIndex = 12;
+            lblNs.TabIndex = 13;
             lblNs.Text = "Namespace:";
             lblNs.TextAlign = ContentAlignment.MiddleRight;
-            // 
+            //
             // txtNamespace
-            // 
-            txtNamespace.Location = new Point(112, 304);
+            //
+            txtNamespace.Location = new Point(112, 334);
             txtNamespace.Name = "txtNamespace";
             txtNamespace.RightToLeft = RightToLeft.No;
             txtNamespace.Size = new Size(206, 24);
-            txtNamespace.TabIndex = 13;
-            // 
+            txtNamespace.TabIndex = 14;
+            //
             // lblNsHint
-            // 
+            //
             lblNsHint.Font = new Font("Segoe UI", 7.5F);
             lblNsHint.ForeColor = Color.Gray;
-            lblNsHint.Location = new Point(112, 326);
+            lblNsHint.Location = new Point(112, 356);
             lblNsHint.Name = "lblNsHint";
             lblNsHint.Size = new Size(206, 16);
-            lblNsHint.TabIndex = 14;
+            lblNsHint.TabIndex = 15;
             lblNsHint.Text = "(اتركه فارغاً إذا لم تُرد Namespace)";
-            // 
+            //
             // lblOut
-            // 
-            lblOut.Location = new Point(10, 350);
+            //
+            lblOut.Location = new Point(10, 380);
             lblOut.Name = "lblOut";
             lblOut.Size = new Size(95, 22);
-            lblOut.TabIndex = 15;
+            lblOut.TabIndex = 16;
             lblOut.Text = "مجلد الإخراج:";
             lblOut.TextAlign = ContentAlignment.MiddleRight;
-            // 
+            //
             // txtOutput
-            // 
-            txtOutput.Location = new Point(112, 348);
+            //
+            txtOutput.Location = new Point(112, 378);
             txtOutput.Name = "txtOutput";
             txtOutput.RightToLeft = RightToLeft.No;
             txtOutput.Size = new Size(170, 24);
-            txtOutput.TabIndex = 16;
-            // 
+            txtOutput.TabIndex = 17;
+            //
             // btnBrowse
-            // 
+            //
             btnBrowse.Cursor = Cursors.Hand;
             btnBrowse.FlatStyle = FlatStyle.Flat;
-            btnBrowse.Location = new Point(286, 346);
+            btnBrowse.Location = new Point(286, 376);
             btnBrowse.Name = "btnBrowse";
             btnBrowse.Size = new Size(32, 26);
             btnBrowse.TabIndex = 17;
@@ -299,7 +322,7 @@ namespace LayerGenForDotNet4.Forms
             grpLang.Controls.Add(chkGenVB);
             grpLang.Controls.Add(chkGenCS);
             grpLang.Controls.Add(chkGenSP);
-            grpLang.Location = new Point(10, 380);
+            grpLang.Location = new Point(10, 410);
             grpLang.Name = "grpLang";
             grpLang.Size = new Size(318, 92);
             grpLang.TabIndex = 18;
@@ -342,7 +365,7 @@ namespace LayerGenForDotNet4.Forms
             grpExtra.Controls.Add(chkGenInit);
             grpExtra.Controls.Add(chkGenCustom);
             grpExtra.Controls.Add(chkRunSP);
-            grpExtra.Location = new Point(10, 480);
+            grpExtra.Location = new Point(10, 510);
             grpExtra.Name = "grpExtra";
             grpExtra.Size = new Size(318, 92);
             grpExtra.TabIndex = 19;
@@ -380,7 +403,7 @@ namespace LayerGenForDotNet4.Forms
             grpFE.Controls.Add(chkFalseErase);
             grpFE.Controls.Add(txtFalseEraseField);
             grpFE.Controls.Add(lblFEField);
-            grpFE.Location = new Point(10, 580);
+            grpFE.Location = new Point(10, 610);
             grpFE.Name = "grpFE";
             grpFE.Size = new Size(318, 56);
             grpFE.TabIndex = 20;
@@ -417,7 +440,7 @@ namespace LayerGenForDotNet4.Forms
             // 
             // chkSuppressComments
             // 
-            chkSuppressComments.Location = new Point(10, 646);
+            chkSuppressComments.Location = new Point(10, 676);
             chkSuppressComments.Name = "chkSuppressComments";
             chkSuppressComments.Size = new Size(318, 28);
             chkSuppressComments.TabIndex = 21;
@@ -431,6 +454,7 @@ namespace LayerGenForDotNet4.Forms
             pnlRight.Controls.Add(lblTablesTitle);
             pnlRight.Controls.Add(btnSelectAll);
             pnlRight.Controls.Add(btnDeselectAll);
+            pnlRight.Controls.Add(txtSearch);
             pnlRight.Controls.Add(clbTables);
             pnlRight.Controls.Add(btnCreateLayers);
             pnlRight.Location = new Point(360, 10);
@@ -477,16 +501,30 @@ namespace LayerGenForDotNet4.Forms
             btnDeselectAll.UseVisualStyleBackColor = false;
             btnDeselectAll.Click += btnDeselectAll_Click;
             // 
+            // txtSearch
+            //
+            txtSearch.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            txtSearch.BorderStyle = BorderStyle.FixedSingle;
+            txtSearch.BackColor = Color.FromArgb(232, 244, 253);
+            txtSearch.Enabled = false;
+            txtSearch.Font = new Font("Segoe UI", 10F);
+            txtSearch.Location = new Point(10, 78);
+            txtSearch.Name = "txtSearch";
+            txtSearch.PlaceholderText = "🔍  بحث عن جدول...";
+            txtSearch.Size = new Size(600, 26);
+            txtSearch.TabIndex = 3;
+            txtSearch.TextChanged += txtSearch_TextChanged;
+            //
             // clbTables
-            // 
+            //
             clbTables.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             clbTables.BorderStyle = BorderStyle.FixedSingle;
             clbTables.CheckOnClick = true;
             clbTables.Font = new Font("Consolas", 9.5F);
-            clbTables.Location = new Point(10, 78);
+            clbTables.Location = new Point(10, 110);
             clbTables.Name = "clbTables";
-            clbTables.Size = new Size(600, 529);
-            clbTables.TabIndex = 3;
+            clbTables.Size = new Size(600, 497);
+            clbTables.TabIndex = 4;
             // 
             // btnCreateLayers
             // 
@@ -501,7 +539,7 @@ namespace LayerGenForDotNet4.Forms
             btnCreateLayers.Location = new Point(10, 616);
             btnCreateLayers.Name = "btnCreateLayers";
             btnCreateLayers.Size = new Size(600, 46);
-            btnCreateLayers.TabIndex = 4;
+            btnCreateLayers.TabIndex = 5;
             btnCreateLayers.Text = "🚀  إنشاء الكود";
             btnCreateLayers.UseVisualStyleBackColor = false;
             btnCreateLayers.Click += btnCreateLayers_Click;
@@ -555,6 +593,8 @@ namespace LayerGenForDotNet4.Forms
         private System.Windows.Forms.TextBox       txtServer           = null!;
         private System.Windows.Forms.Label         lblDb               = null!;
         private System.Windows.Forms.TextBox       txtDatabase         = null!;
+        private System.Windows.Forms.Label         lblSchema           = null!;
+        private System.Windows.Forms.TextBox       txtSchema           = null!;
         private System.Windows.Forms.GroupBox      grpAuth             = null!;
         private System.Windows.Forms.RadioButton   rbWindows           = null!;
         private System.Windows.Forms.RadioButton   rbSql               = null!;
@@ -583,6 +623,7 @@ namespace LayerGenForDotNet4.Forms
         private System.Windows.Forms.Label         lblFEField          = null!;
         private System.Windows.Forms.TextBox       txtFalseEraseField  = null!;
         private System.Windows.Forms.CheckBox      chkSuppressComments = null!;
+        private System.Windows.Forms.TextBox       txtSearch           = null!;
         private System.Windows.Forms.CheckedListBox clbTables          = null!;
         private System.Windows.Forms.Button        btnSelectAll        = null!;
         private System.Windows.Forms.Button        btnDeselectAll      = null!;

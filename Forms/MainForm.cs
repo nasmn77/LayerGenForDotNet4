@@ -10,6 +10,7 @@ namespace LayerGenForDotNet4.Forms
     {
         private SqlSchemaReader? _reader;
         private List<TableInfo> _tables = new();
+        private List<TableInfo> _filteredTables = new();
         private string _connectionString = "";
 
         public MainForm()
@@ -26,6 +27,7 @@ namespace LayerGenForDotNet4.Forms
             {
                 txtServer.Text = Settings.Get("Server", ".");
                 txtDatabase.Text = Settings.Get("Database", "");
+                txtSchema.Text = Settings.Get("Schema", "dbo");
                 txtUser.Text = Settings.Get("User", "");
                 txtPassword.Text = Settings.Get("Password", "");
 
@@ -53,6 +55,7 @@ namespace LayerGenForDotNet4.Forms
         {
             Settings.Set("Server", txtServer.Text);
             Settings.Set("Database", txtDatabase.Text);
+            Settings.Set("Schema", txtSchema.Text);
             Settings.Set("User", txtUser.Text);
             Settings.Set("Password", txtPassword.Text);
             Settings.SetBool("WindowsAuth", rbWindows.Checked);
@@ -93,7 +96,9 @@ namespace LayerGenForDotNet4.Forms
 
             try
             {
-                _tables = _reader.GetTables();
+                _tables = _reader.GetTables(txtSchema.Text.Trim());
+                txtSearch.Enabled = true;
+                txtSearch.Text = "";
                 PopulateTableList();
                 lblStatus.Text = $"✅ تم الاتصال – {_tables.Count} جدول/view";
                 lblStatus.ForeColor = Color.DarkGreen;
@@ -108,12 +113,22 @@ namespace LayerGenForDotNet4.Forms
 
         private void PopulateTableList()
         {
+            string filter = txtSearch?.Text?.Trim() ?? "";
+            _filteredTables = string.IsNullOrEmpty(filter)
+                ? new List<TableInfo>(_tables)
+                : _tables.Where(t => t.TableName.IndexOf(filter, StringComparison.OrdinalIgnoreCase) >= 0).ToList();
+
             clbTables.Items.Clear();
-            foreach (var t in _tables)
+            foreach (var t in _filteredTables)
             {
                 string display = t.IsView ? $"[VIEW]  {t.TableName}" : t.TableName;
                 clbTables.Items.Add(display, false);
             }
+        }
+
+        private void txtSearch_TextChanged(object sender, EventArgs e)
+        {
+            PopulateTableList();
         }
 
         // ─── Select / Deselect All ──────────────────────────────────────────────
@@ -155,7 +170,7 @@ namespace LayerGenForDotNet4.Forms
             var selected = new List<TableInfo>();
             for (int i = 0; i < clbTables.Items.Count; i++)
                 if (clbTables.GetItemChecked(i))
-                    selected.Add(_tables[i]);
+                    selected.Add(_filteredTables[i]);
 
             if (selected.Count == 0)
             {
@@ -311,7 +326,7 @@ namespace LayerGenForDotNet4.Forms
                         if (genSP)
                         {
                             spScript.Append(
-                                CodeGeneratorCS.GenerateStoredProcedures(table, suppress, falseErase, falseEraseFld));
+                                CodeGeneratorCS.GenerateStoredProcedures(table, suppress, falseErase, falseEraseFld, txtSchema.Text.Trim()));
                         }
                     }
                     catch (Exception ex)
@@ -420,6 +435,7 @@ namespace LayerGenForDotNet4.Forms
             int w = pnlRight.ClientSize.Width - 20;
             int h = pnlRight.ClientSize.Height - 140;
             lblTablesTitle.Width = w;
+            txtSearch.Width = w;
             clbTables.Width = w;
             clbTables.Height = Math.Max(80, h);
             btnCreateLayers.Width = w;
