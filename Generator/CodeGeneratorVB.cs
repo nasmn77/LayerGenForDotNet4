@@ -580,8 +580,17 @@ namespace LayerGenForDotNet4.Generator
                 sb.AppendLine();
                 if (pkField != null)
                 {
-                    W(sb, 4, $"cmd.Parameters(\"@{pk}\").Value = Me.m_{pk}");
-                    W(sb, 4, $"cmd.Parameters(\"@{pk}\").Direction = ParameterDirection.Output");
+                    if (table.IsPrimaryKeyIdentity)
+                    {
+                        // Auto-increment: PK comes back from DB via OUTPUT parameter
+                        W(sb, 4, $"cmd.Parameters(\"@{pk}\").Direction = ParameterDirection.Output");
+                    }
+                    else
+                    {
+                        // Manual PK: user supplies the value
+                        W(sb, 4, $"cmd.Parameters(\"@{pk}\").Value = Me.m_{pk}");
+                        W(sb, 4, $"cmd.Parameters(\"@{pk}\").Direction = ParameterDirection.Input");
+                    }
                 }
                 W(sb, 4, "Try");
                 W(sb, 5, "conn.Open()");
@@ -589,7 +598,7 @@ namespace LayerGenForDotNet4.Generator
                 W(sb, 4, "Catch ex As Exception");
                 W(sb, 5, "Throw ex");
                 W(sb, 4, "End Try");
-                if (pkField != null)
+                if (pkField != null && table.IsPrimaryKeyIdentity)
                     W(sb, 4, $"Me.m_{pk} = CType(cmd.Parameters(\"@{pk}\").Value, {VbType(pkField, false)})");
                 W(sb, 4, "conn.Close()");
                 W(sb, 3, "End If");
