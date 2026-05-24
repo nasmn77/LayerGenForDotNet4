@@ -633,6 +633,18 @@ namespace LayerGenForDotNet4.Generator
             W(sb, 2, "}");
             W(sb, 0);
 
+            // Delete (collection) – only when table has a PK and is not a view
+            if (!table.IsView && table.PrimaryKey != null)
+            {
+                if (!suppressComments) W(sb, 2, "/// <summary>Calls Delete() on every item in the collection.</summary>");
+                W(sb, 2, "public void Delete()");
+                W(sb, 2, "{");
+                W(sb, 3, "foreach (var item in this)");
+                W(sb, 4, "item.Delete();");
+                W(sb, 2, "}");
+                W(sb, 0);
+            }
+
             W(sb, 1, "}");
 
             W(sb, 0, "}"); // end namespace

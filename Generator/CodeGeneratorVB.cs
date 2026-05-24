@@ -968,6 +968,19 @@ namespace LayerGenForDotNet4.Generator
                 sb.AppendLine();
             }
 
+            // Delete (collection)
+            if (!table.IsView && pkField != null)
+            {
+                sb.AppendLine("#Region \"Delete Function\"");
+                W(sb, 1, "Public Sub Delete()");
+                W(sb, 2, $"For Each a As {cn} In Me.InnerList");
+                W(sb, 3, "a.Delete()");
+                W(sb, 2, "Next");
+                W(sb, 1, "End Sub");
+                sb.AppendLine("#End Region");
+                sb.AppendLine();
+            }
+
             // Rollback
             sb.AppendLine("#Region \"Rollback Sub\"");
             W(sb, 1, "Public Sub Rollback");
