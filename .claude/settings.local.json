@@ -1,7 +1,12 @@
 {
   "permissions": {
     "allow": [
-      "Read(//c/MyProjects/LayergenMMX/Layers/New/**)"
+      "Read(//c/MyProjects/LayergenMMX/Layers/New/**)",
+      "Bash(del \"C:\\\\MyProjects\\\\LayergenMMX\\\\Layers\\\\New\\\\Universal.VB\")",
+      "Bash(del \"C:\\\\MyProjects\\\\LayergenMMX\\\\Layers\\\\New\\\\Interfaces.VB\")"
+    ],
+    "additionalDirectories": [
+      "C:\\MyProjects\\LayergenMMX\\Layers\\New"
     ]
   }
 }
