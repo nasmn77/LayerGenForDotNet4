@@ -367,14 +367,12 @@ namespace LayerGenForDotNet4.Generator
             {
                 W(sb, 2, "#region Save");
 
-                // FalseErase field excluded always (managed only by Delete SP)
                 bool hasFEField = !string.IsNullOrEmpty(falseEraseField) &&
                     table.Fields.Any(f => f.FieldName.Equals(falseEraseField, StringComparison.OrdinalIgnoreCase));
 
-                // Required fields: NOT NULL, not PK, not computed, not FalseErase
+                // Required fields: NOT NULL, not PK, not computed
                 var requiredFields = table.Fields
-                    .Where(f => !f.IsNullable && !f.IsPrimaryKey && !f.IsComputed &&
-                                !(hasFEField && f.FieldName.Equals(falseEraseField, StringComparison.OrdinalIgnoreCase)))
+                    .Where(f => !f.IsNullable && !f.IsPrimaryKey && !f.IsComputed)
                     .ToList();
 
                 if (!suppressComments) W(sb, 2, "/// <summary>Inserts or updates the current record.</summary>");
@@ -413,17 +411,17 @@ namespace LayerGenForDotNet4.Generator
                 W(sb, 3, "cmd.CommandType = CommandType.StoredProcedure;");
                 W(sb, 0);
 
-                // Add parameters – exclude FalseErase field and identity PK
+                // Add parameters – exclude identity PK
                 foreach (var f in table.Fields)
                 {
                     if (f.IsComputed) continue;
                     if (f.IsPrimaryKey && table.IsPrimaryKeyIdentity) continue;
-                    if (hasFEField && f.FieldName.Equals(falseEraseField, StringComparison.OrdinalIgnoreCase)) continue;
 
                     string varName = $"_{SafeName(f.FieldName)}";
                     string sqlDbType = f.SqlDbTypeStr();
                     string ftLow = f.SqlTypeName.ToLowerInvariant();
-                    string paramVal = CsParamValue(f, varName);
+                    bool isFEParam = hasFEField && f.FieldName.Equals(falseEraseField, StringComparison.OrdinalIgnoreCase);
+                    string paramVal = CsParamValue(f, varName, isFEParam);
 
                     if (ftLow is "decimal" or "numeric")
                         W(sb, 3, $"{{ var _p = cmd.Parameters.Add(\"@{f.FieldName}\", SqlDbType.{sqlDbType}); _p.Precision = {f.Precision}; _p.Scale = {f.Scale}; _p.Value = {paramVal}; }}");
@@ -717,11 +715,9 @@ namespace LayerGenForDotNet4.Generator
                 SpHeader();
                 Line($"CREATE PROCEDURE {sch}.[{procInsert}]");
 
-                // Insert params: exclude FalseErase field (always hardcoded to 0 in INSERT, never a parameter)
                 bool hasFEField = falseEraseField != "" && table.Fields.Any(f => f.FieldName.Equals(falseEraseField, StringComparison.OrdinalIgnoreCase));
                 var insertParams = table.Fields
-                    .Where(f => !f.IsComputed &&
-                        !(hasFEField && f.FieldName.Equals(falseEraseField, StringComparison.OrdinalIgnoreCase)))
+                    .Where(f => !f.IsComputed)
                     .ToList();
 
                 bool first = true;
@@ -731,33 +727,27 @@ namespace LayerGenForDotNet4.Generator
                     first = false;
                     bool isOutputPk = f.IsPrimaryKey && table.IsPrimaryKeyIdentity;
                     string outStr = isOutputPk ? " OUTPUT" : "";
-                    string nullDefault = (!isOutputPk && f.IsNullable) ? " = NULL" : "";
+                    bool isFEParam = hasFEField && f.FieldName.Equals(falseEraseField, StringComparison.OrdinalIgnoreCase);
+                    string nullDefault = (!isOutputPk && (f.IsNullable || isFEParam)) ? " = 0" : "";
+                    if (!isOutputPk && f.IsNullable && !isFEParam) nullDefault = " = NULL";
                     Line($"{prefix}@{f.FieldName} {GetSqlTypeDecl(f)}{outStr}{nullDefault}");
                 }
                 Line("AS");
                 Line("SET NOCOUNT ON;");
                 Line();
 
-                // Columns to insert: exclude identity PK; FalseErase col gets hardcoded value 0
+                // Columns to insert: exclude identity PK
                 var nonIdentityCols = table.Fields
                     .Where(f => !f.IsComputed && !(f.IsPrimaryKey && table.IsPrimaryKeyIdentity))
                     .ToList();
 
-                // FalseErase column: NOT a parameter – written inline as literal 0 in VALUES
-                var insertCols = nonIdentityCols
-                    .Where(f => !(hasFEField && f.FieldName.Equals(falseEraseField, StringComparison.OrdinalIgnoreCase)))
-                    .Select(f => $"[{f.FieldName}]");
-                var insertVals = nonIdentityCols
-                    .Where(f => !(hasFEField && f.FieldName.Equals(falseEraseField, StringComparison.OrdinalIgnoreCase)))
-                    .Select(f => $"@{f.FieldName}");
-
-                string feCols = hasFEField ? $", [{falseEraseField}]" : "";
-                string feVals = hasFEField ? ", 0" : "";
+                var insertCols = nonIdentityCols.Select(f => $"[{f.FieldName}]");
+                var insertVals = nonIdentityCols.Select(f => $"@{f.FieldName}");
 
                 Line($"INSERT INTO {sch}.[{tbl}]");
-                Line($"    ({string.Join(", ", insertCols)}{feCols})");
+                Line($"    ({string.Join(", ", insertCols)})");
                 Line("VALUES");
-                Line($"    ({string.Join(", ", insertVals)}{feVals})");
+                Line($"    ({string.Join(", ", insertVals)})");
                 Line();
                 if (pk != "" && table.IsPrimaryKeyIdentity)
                     Line($"SET @{pk} = SCOPE_IDENTITY()");
@@ -770,10 +760,8 @@ namespace LayerGenForDotNet4.Generator
                 SpHeader();
                 Line($"CREATE PROCEDURE {sch}.[{procUpdate}]");
 
-                // Exclude FalseErase field from Update – it is managed only by Delete
                 first = true;
-                foreach (var f in table.Fields.Where(f => !f.IsComputed &&
-                    !(hasFEField && f.FieldName.Equals(falseEraseField, StringComparison.OrdinalIgnoreCase))))
+                foreach (var f in table.Fields.Where(f => !f.IsComputed))
                 {
                     string prefix = first ? "    " : "   ,";
                     first = false;
@@ -786,8 +774,7 @@ namespace LayerGenForDotNet4.Generator
                 Line($"UPDATE {sch}.[{tbl}]");
                 Line("SET");
                 var updateFields = table.Fields
-                    .Where(f => !f.IsComputed && !f.IsPrimaryKey &&
-                        !(hasFEField && f.FieldName.Equals(falseEraseField, StringComparison.OrdinalIgnoreCase)))
+                    .Where(f => !f.IsComputed && !f.IsPrimaryKey)
                     .ToList();
                 for (int i = 0; i < updateFields.Count; i++)
                 {
@@ -969,13 +956,16 @@ namespace LayerGenForDotNet4.Generator
         /// - NOT NULL value types (bool, int…)      → var  (always has a value)
         /// - NOT NULL string                         → (object?)var ?? DBNull.Value (defensive)
         /// </summary>
-        private static string CsParamValue(FieldInfo f, string varName)
+        private static string CsParamValue(FieldInfo f, string varName, bool isFalseEraseField = false)
         {
             bool isRefType = f.NetType is SqlNetType.String or SqlNetType.ByteArray;
-            // Nullable OR reference types → guard with DBNull
             if (f.IsNullable || isRefType)
+            {
+                // FalseErase field: default to false instead of DBNull when null
+                if (isFalseEraseField)
+                    return $"{varName} ?? (object)false";
                 return $"(object?){varName} ?? DBNull.Value";
-            // NOT NULL value type → send directly
+            }
             return varName;
         }
 

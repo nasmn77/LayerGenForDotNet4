@@ -463,13 +463,11 @@ namespace LayerGenForDotNet4.Generator
                     sb.AppendLine();
                 }
 
-                // FalseErase field is always excluded (managed only by Delete SP)
                 bool hasFEField = falseEraseField != "" && table.Fields.Any(ff => ff.FieldName.Equals(falseEraseField, StringComparison.OrdinalIgnoreCase));
 
                 // Build validation condition for NOT NULL fields
                 var requiredFields = table.Fields
-                    .Where(f => !f.IsNullable && !f.IsPrimaryKey && !f.IsComputed &&
-                                !(hasFEField && f.FieldName.Equals(falseEraseField, StringComparison.OrdinalIgnoreCase)))
+                    .Where(f => !f.IsNullable && !f.IsPrimaryKey && !f.IsComputed)
                     .ToList();
 
                 // Build combined If: m_IsDirty AndAlso field1OK AndAlso ...
@@ -503,7 +501,6 @@ namespace LayerGenForDotNet4.Generator
                 {
                     if (f.IsPrimaryKey) continue;
                     if (f.IsComputed) continue;
-                    if (hasFEField && f.FieldName.Equals(falseEraseField, StringComparison.OrdinalIgnoreCase)) continue;
 
                     string vt = VbType(f);
                     string tLow = f.SqlTypeName.ToLowerInvariant();
@@ -543,11 +540,12 @@ namespace LayerGenForDotNet4.Generator
                     }
                     else if (isNullableVal)
                     {
+                        bool isFE = hasFEField && f.FieldName.Equals(falseEraseField, StringComparison.OrdinalIgnoreCase);
                         // Boolean?, Integer?, Date? → HasValue
                         W(sb, 3, $"If Me.m_{f.FieldName}.HasValue Then");
                         W(sb, 4, $"cmd.Parameters(\"@{f.FieldName}\").Value = Me.m_{f.FieldName}.Value");
                         W(sb, 3, "Else");
-                        W(sb, 4, $"cmd.Parameters(\"@{f.FieldName}\").Value = DBNull.Value");
+                        W(sb, 4, $"cmd.Parameters(\"@{f.FieldName}\").Value = {(isFE ? "False" : "DBNull.Value")}");
                         W(sb, 3, "End If");
                     }
                     else
