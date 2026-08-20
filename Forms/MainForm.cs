@@ -1,4 +1,4 @@
-using LayerGenForDotNet4.Database;
+﻿using LayerGenForDotNet4.Database;
 using LayerGenForDotNet4.Generator;
 using LayerGenForDotNet4.Models;
 using Microsoft.Data.SqlClient;
@@ -26,7 +26,7 @@ namespace LayerGenForDotNet4.Forms
             try
             {
                 txtServer.Text = Settings.Get("Server", ".");
-                txtDatabase.Text = Settings.Get("Database", "");
+                cboDatabase.Text = Settings.Get("Database", "");
                 txtSchema.Text = Settings.Get("Schema", "dbo");
                 txtUser.Text = Settings.Get("User", "");
                 txtPassword.Text = Settings.Get("Password", "");
@@ -54,7 +54,7 @@ namespace LayerGenForDotNet4.Forms
         private void SaveSettings()
         {
             Settings.Set("Server", txtServer.Text);
-            Settings.Set("Database", txtDatabase.Text);
+            Settings.Set("Database", cboDatabase.Text);
             Settings.Set("Schema", txtSchema.Text);
             Settings.Set("User", txtUser.Text);
             Settings.Set("Password", txtPassword.Text);
@@ -77,10 +77,61 @@ namespace LayerGenForDotNet4.Forms
         private string BuildConnectionString() =>
             SqlSchemaReader.BuildConnectionString(
                 server: txtServer.Text.Trim(),
-                database: txtDatabase.Text.Trim(),
+                database: cboDatabase.Text.Trim(),
                 windowsAuth: rbWindows.Checked,
                 user: txtUser.Text.Trim(),
                 password: txtPassword.Text.Trim());
+
+        /// <summary>Fills the database combo from the server; keeps the current selection if still present</summary>
+        private void LoadDatabaseList(bool showErrors)
+        {
+            string server = txtServer.Text.Trim();
+            if (string.IsNullOrEmpty(server))
+            {
+                if (showErrors)
+                    MessageBox.Show("أدخل اسم السيرفر أولاً.", "تنبيه",
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            string current = cboDatabase.Text;
+            Cursor = Cursors.WaitCursor;
+            try
+            {
+                var dbs = SqlSchemaReader.GetDatabases(
+                    server: server,
+                    windowsAuth: rbWindows.Checked,
+                    user: txtUser.Text.Trim(),
+                    password: txtPassword.Text.Trim());
+
+                cboDatabase.Items.Clear();
+                cboDatabase.Items.AddRange(dbs.ToArray());
+                cboDatabase.Text = current;   // preserve what the user already typed/chose
+
+                if (showErrors && dbs.Count == 0)
+                    MessageBox.Show("لا توجد قواعد بيانات متاحة على هذا السيرفر.", "تنبيه",
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                if (showErrors)
+                    MessageBox.Show($"لا يمكن قراءة قائمة قواعد البيانات:\n{ex.Message}",
+                        "خطأ في الاتصال", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                Cursor = Cursors.Default;
+            }
+        }
+
+        private void btnRefreshDbs_Click(object sender, EventArgs e) => LoadDatabaseList(true);
+
+        private void cboDatabase_DropDown(object sender, EventArgs e)
+        {
+            // fill on first drop-down so the user does not have to press refresh
+            if (cboDatabase.Items.Count == 0)
+                LoadDatabaseList(false);
+        }
 
         private void btnConnect_Click(object sender, EventArgs e)
         {

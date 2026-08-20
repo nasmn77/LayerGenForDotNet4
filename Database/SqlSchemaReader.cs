@@ -1,4 +1,4 @@
-using Microsoft.Data.SqlClient;
+﻿using Microsoft.Data.SqlClient;
 using LayerGenForDotNet4.Models;
 
 namespace LayerGenForDotNet4.Database
@@ -186,6 +186,34 @@ namespace LayerGenForDotNet4.Database
         /// <summary>
         /// Build a connection string from parts.
         /// </summary>
+        /// <summary>Returns the list of user databases available on the given server</summary>
+        public static List<string> GetDatabases(
+            string server, bool windowsAuth, string user = "", string password = "")
+        {
+            var list = new List<string>();
+
+            // Connect to master so we can enumerate the databases on this server
+            string cs = BuildConnectionString(server, "master", windowsAuth, user, password);
+
+            using var conn = new SqlConnection(cs);
+            conn.Open();
+
+            const string sql = @"
+                SELECT name
+                FROM sys.databases
+                WHERE database_id > 4                 -- skip master/tempdb/model/msdb
+                  AND state = 0                       -- ONLINE only
+                  AND HAS_DBACCESS(name) = 1          -- only what the user can open
+                ORDER BY name";
+
+            using var cmd = new SqlCommand(sql, conn);
+            using var rdr = cmd.ExecuteReader();
+            while (rdr.Read())
+                list.Add(rdr.GetString(0));
+
+            return list;
+        }
+
         public static string BuildConnectionString(
             string server, string database,
             bool windowsAuth, string user = "", string password = "")

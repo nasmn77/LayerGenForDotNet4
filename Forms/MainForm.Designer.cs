@@ -1,4 +1,4 @@
-namespace LayerGenForDotNet4.Forms
+﻿namespace LayerGenForDotNet4.Forms
 {
     partial class MainForm
     {
@@ -20,7 +20,8 @@ namespace LayerGenForDotNet4.Forms
             lblServer = new Label();
             txtServer = new TextBox();
             lblDb = new Label();
-            txtDatabase = new TextBox();
+            cboDatabase = new ComboBox();
+            btnRefreshDbs = new Button();
             lblSchema = new Label();
             txtSchema = new TextBox();
             grpAuth = new GroupBox();
@@ -76,7 +77,8 @@ namespace LayerGenForDotNet4.Forms
             pnlLeft.Controls.Add(lblServer);
             pnlLeft.Controls.Add(txtServer);
             pnlLeft.Controls.Add(lblDb);
-            pnlLeft.Controls.Add(txtDatabase);
+            pnlLeft.Controls.Add(cboDatabase);
+            pnlLeft.Controls.Add(btnRefreshDbs);
             pnlLeft.Controls.Add(lblSchema);
             pnlLeft.Controls.Add(txtSchema);
             pnlLeft.Controls.Add(grpAuth);
@@ -139,13 +141,27 @@ namespace LayerGenForDotNet4.Forms
             lblDb.Text = "قاعدة البيانات:";
             lblDb.TextAlign = ContentAlignment.MiddleRight;
             // 
-            // txtDatabase
+            // cboDatabase
             // 
-            txtDatabase.Location = new Point(112, 74);
-            txtDatabase.Name = "txtDatabase";
-            txtDatabase.RightToLeft = RightToLeft.No;
-            txtDatabase.Size = new Size(206, 24);
-            txtDatabase.TabIndex = 4;
+            cboDatabase.DropDownStyle = ComboBoxStyle.DropDown;
+            cboDatabase.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
+            cboDatabase.AutoCompleteSource = AutoCompleteSource.ListItems;
+            cboDatabase.Location = new Point(112, 74);
+            cboDatabase.Name = "cboDatabase";
+            cboDatabase.RightToLeft = RightToLeft.No;
+            cboDatabase.Size = new Size(176, 25);
+            cboDatabase.TabIndex = 4;
+            cboDatabase.DropDown += cboDatabase_DropDown;
+            // 
+            // btnRefreshDbs
+            // 
+            btnRefreshDbs.Location = new Point(292, 73);
+            btnRefreshDbs.Name = "btnRefreshDbs";
+            btnRefreshDbs.Size = new Size(26, 26);
+            btnRefreshDbs.TabIndex = 5;
+            btnRefreshDbs.Text = "⟳";
+            btnRefreshDbs.UseVisualStyleBackColor = true;
+            btnRefreshDbs.Click += btnRefreshDbs_Click;
             // 
             // lblSchema
             //
@@ -592,7 +608,8 @@ namespace LayerGenForDotNet4.Forms
         private System.Windows.Forms.Label         lblServer           = null!;
         private System.Windows.Forms.TextBox       txtServer           = null!;
         private System.Windows.Forms.Label         lblDb               = null!;
-        private System.Windows.Forms.TextBox       txtDatabase         = null!;
+        private System.Windows.Forms.ComboBox      cboDatabase         = null!;
+        private System.Windows.Forms.Button        btnRefreshDbs       = null!;
         private System.Windows.Forms.Label         lblSchema           = null!;
         private System.Windows.Forms.TextBox       txtSchema           = null!;
         private System.Windows.Forms.GroupBox      grpAuth             = null!;
